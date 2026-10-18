@@ -176,6 +176,12 @@ jobs:
       - name: 发布 Ryujinx（Linux x64 自包含）
         run: |
           mkdir -p release_output
+          dotnet --version
+          echo "===== nuget sources ====="
+          dotnet nuget list source
+          echo "===== restore diag ====="
+          dotnet restore -v normal src/Ryujinx/Ryujinx.csproj 2>&1 | grep -E "NU[0-9]{4}|error|Error|Restored|Failed|Determining|Package" | head -100 || true
+          echo "===== publish ====="
           dotnet publish -c Release -r linux-x64 -o ./publish/publish \
             -p:DebugType=embedded src/Ryujinx --self-contained true
           chmod +x publish/publish/Ryujinx.sh publish/publish/Ryujinx
