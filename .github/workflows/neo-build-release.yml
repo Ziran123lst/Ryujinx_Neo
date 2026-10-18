@@ -48,12 +48,20 @@ jobs:
           SDKMANAGER="$(command -v sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")"
           echo "Using sdkmanager: $SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          # 注意：Android 17 (API 37) 目前是 Preview 版本，必须用 --channel=3（含预览渠道）安装
-          "$SDKMANAGER" --channel=3 --install \
-            "platforms;android-37" \
+          # 注意：Android 17 (API 37) 平台包采用版本化命名 platforms;android-37.0，
+          # 仓库中不存在旧式 platforms;android-37
+          "$SDKMANAGER" --install \
+            "platforms;android-37.0" \
             "build-tools;36.0.0" \
+            "build-tools;37.0.0" \
             "ndk;28.2.13676358" \
             "cmake;4.1.2"
+          # AGP 按 compileSdk=37 查找 platforms/android-37，若 sdkmanager 装到 android-37.0 则复制一份兼容
+          ls "$ANDROID_HOME/platforms/"
+          if [ -d "$ANDROID_HOME/platforms/android-37.0" ] && [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
+            cp -r "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
+            echo "Created platforms/android-37 alias for AGP compatibility"
+          fi
 
       - name: 构建 APK（mainlineArmv82Release）
         working-directory: src/KenjinxAndroid
