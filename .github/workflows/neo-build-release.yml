@@ -48,7 +48,8 @@ jobs:
           SDKMANAGER="$(command -v sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")"
           echo "Using sdkmanager: $SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          "$SDKMANAGER" --install \
+          # 注意：Android 17 (API 37) 目前是 Preview 版本，必须用 --channel=3（含预览渠道）安装
+          "$SDKMANAGER" --channel=3 --install \
             "platforms;android-37" \
             "build-tools;36.0.0" \
             "ndk;28.2.13676358" \
