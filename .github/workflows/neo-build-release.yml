@@ -131,11 +131,12 @@ jobs:
           ndk.dir=$ANDROID_NDK_HOME
           cmake.dir=$ANDROID_HOME/cmake/${CMAKE_NATIVE_VERSION}
           EOF
-          # git.ryujinx.app 已死：openal-soft submodule 无法从原 URL 拉取，
-          # 用官方上游源码替代（CMake 会自行拉取 adrenotools 及其嵌套 submodule）
+          # git.ryujinx.app 已死：openal-soft submodule 无法从原 URL 拉取。
+          # 原 gitlink commit(c41d64c6) 恰好等于上游 tag 1.25.1，用同版本替代
+          #（CMake 会自行拉取 adrenotools 及其嵌套 submodule）
           if [ ! -d app/src/main/cpp/libraries/openal/CMakeLists.txt ]; then
             rm -rf app/src/main/cpp/libraries/openal
-            git clone --depth 1 https://github.com/kcat/openal-soft.git app/src/main/cpp/libraries/openal
+            git clone --depth 1 --branch 1.25.1 https://github.com/kcat/openal-soft.git app/src/main/cpp/libraries/openal
           fi
           ./gradlew assembleMainlineArmv82Release \
             -Porg.kenjinx.config=release \
