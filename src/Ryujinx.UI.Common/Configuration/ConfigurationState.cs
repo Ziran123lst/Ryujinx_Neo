@@ -942,7 +942,7 @@ namespace Ryujinx.UI.Common.Configuration
             UI.ShownFileTypes.NRO.Value = true;
             UI.ShownFileTypes.NSO.Value = true;
             UI.EnableCustomTheme.Value = true;
-            UI.LanguageCode.Value = "en_US";
+            UI.LanguageCode.Value = "zh_CN"; // This fork defaults to Simplified Chinese.
             UI.CustomThemePath.Value = "";
             UI.BaseStyle.Value = "Dark";
             UI.GameListViewMode.Value = 0;
@@ -1424,7 +1424,7 @@ namespace Ryujinx.UI.Common.Configuration
                 configurationFileFormat.GameListViewMode = 0;
                 configurationFileFormat.ShowNames = true;
                 configurationFileFormat.GridSize = 2;
-                configurationFileFormat.LanguageCode = "en_US";
+                configurationFileFormat.LanguageCode = "zh_CN"; // This fork defaults to Simplified Chinese.
 
                 configurationFileUpdated = true;
             }
