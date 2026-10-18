@@ -2069,9 +2069,9 @@ namespace Ryujinx.Ava.UI.ViewModels
                     $"[NEOV2-NCZBLOCK-CONVERT] Detection failed: {ex}");
 
                 await ContentDialogHelper.CreateErrorDialog(
-                    "Falha ao analisar o arquivo NSZ.\n\n" +
+                    "解析 NSZ 文件失败。\n\n" +
                     ex.Message +
-                    "\n\nO arquivo original foi mantido.");
+                    "\n\n原始文件已保留。");
 
                 return false;
             }
@@ -2090,8 +2090,8 @@ namespace Ryujinx.Ava.UI.ViewModels
 
             TaskDialog dialog = new()
             {
-                Header = "Convertendo NSZ para NCZBLOCK",
-                SubHeader = "Preparando conversao...",
+                Header = LocaleManager.Instance[LocaleKeys.ConvertNszToNczblock],
+                SubHeader = LocaleManager.Instance[LocaleKeys.PreparingConversion],
                 IconSource = new SymbolIconSource
                 {
                     Symbol = Symbol.Download,
@@ -2141,7 +2141,7 @@ namespace Ryujinx.Ava.UI.ViewModels
 
                                 Dispatcher.UIThread.Post(() =>
                                 {
-                                    dialog.SubHeader = $"{phase}... {percent}%";
+                                    dialog.SubHeader = $"{LocaleManager.Instance[LocaleKeys.ConvertNszToNczblock]}... {percent}%";
                                     dialog.SetProgressBarState(
                                         percent,
                                         TaskDialogProgressState.Normal);
@@ -2194,9 +2194,9 @@ namespace Ryujinx.Ava.UI.ViewModels
             if (!success)
             {
                 await ContentDialogHelper.CreateErrorDialog(
-                    "Falha ao converter o NSZ para NCZBLOCK.\n\n" +
+                    "NSZ 转换为 NCZBLOCK 失败。\n\n" +
                     error +
-                    "\n\nO arquivo NSZ original foi mantido.");
+                    "\n\n原始 NSZ 文件已保留。");
 
                 return false;
             }
