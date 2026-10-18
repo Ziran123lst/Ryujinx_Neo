@@ -47,7 +47,7 @@
                 <MenuItem Header="{locale:Locale MenuBarFileOpenApplet}" IsEnabled="{Binding IsAppletMenuActive}">
                     <MenuItem
                         Click="OpenMiiApplet"
-                        Header="Mii Edit Applet"
+                        Header="{locale:Locale MenuBarFileOpenMiiApplet}"
                         ToolTip.Tip="{locale:Locale MenuBarFileOpenAppletOpenMiiAppletToolTip}" />
                 </MenuItem>
                 <Separator />

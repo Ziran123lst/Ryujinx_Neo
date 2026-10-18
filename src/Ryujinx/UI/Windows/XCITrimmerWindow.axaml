@@ -269,7 +269,7 @@
                         Margin="5"
                         Click="Trim"
                         IsEnabled="{Binding CanTrim}">
-                        <TextBlock Text="Trim" />
+                        <TextBlock Text="{locale:Locale XCITrimmerTrim}" />
                     </Button>
                     <Button
                         Name="UntrimButton"
@@ -277,7 +277,7 @@
                         Margin="5"
                         Click="Untrim"
                         IsEnabled="{Binding CanUntrim}">
-                        <TextBlock Text="Untrim" />
+                        <TextBlock Text="{locale:Locale XCITrimmerUntrim}" />
                     </Button>
                 </StackPanel>
                 <StackPanel

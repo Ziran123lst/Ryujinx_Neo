@@ -164,7 +164,7 @@ namespace Ryujinx.Ava.UI.Applet
         {
             ManualResetEvent dialogCloseEvent = new(false);
             bool okPressed = false;
-            string inputText = "My Amiibo";
+            string inputText = LocaleManager.Instance[LocaleKeys.CabinetInitialText];
             Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 try

@@ -23,7 +23,9 @@ object I18n {
     const val SYSTEM = "system"
     private const val PREF_KEY = "app_language"
     private const val BASE_TAG = "pt-BR"
-    private const val FALLBACK_TAG = "en"
+    // This fork defaults to Simplified Chinese out of the box.
+    private const val DEFAULT_TAG = "zh-CN"
+    private const val FALLBACK_TAG = "zh-CN"
 
     data class Language(val tag: String, val nativeName: String)
 
@@ -59,9 +61,9 @@ object I18n {
             if (initialized) return
             preference = try {
                 PreferenceManager.getDefaultSharedPreferences(KenjinxApplication.context)
-                    .getString(PREF_KEY, SYSTEM) ?: SYSTEM
+                    .getString(PREF_KEY, DEFAULT_TAG) ?: DEFAULT_TAG
             } catch (_: Throwable) {
-                SYSTEM
+                DEFAULT_TAG
             }
             if (preference != SYSTEM && languages.none { it.tag == preference }) preference = SYSTEM
             applyLocked()

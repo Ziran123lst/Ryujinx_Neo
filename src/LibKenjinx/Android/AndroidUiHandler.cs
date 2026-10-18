@@ -46,7 +46,7 @@ namespace LibKenjinx.Android
         {
             _input = null;
             _resetEvent.Reset();
-            Interop.UpdateUiHandler("Software Keyboard",
+            Interop.UpdateUiHandler("软件键盘",
                 args.HeaderText ?? "",
                 args.GuideText ?? "",
                 2,
@@ -80,15 +80,15 @@ namespace LibKenjinx.Android
 
         public bool DisplayMessageDialog(ControllerAppletUIArgs args)
         {
-            string playerCount = args.PlayerCountMin == args.PlayerCountMax ? $"exactly {args.PlayerCountMin}" : $"{args.PlayerCountMin}-{args.PlayerCountMax}";
+            string playerCount = args.PlayerCountMin == args.PlayerCountMax ? $"正好 {args.PlayerCountMin} 个" : $"{args.PlayerCountMin}-{args.PlayerCountMax}";
 
-            string message = $"Application requests **{playerCount}** player(s) with:\n\n"
-                           + $"**TYPES:** {args.SupportedStyles}\n\n"
-                           + $"**PLAYERS:** {string.Join(", ", args.SupportedPlayers)}\n\n"
-                           + (args.IsDocked ? "Docked mode set. `Handheld` is also invalid.\n\n" : "")
-                           + "_Please reconfigure Input now and then press OK._";
+            string message = $"应用程序请求 **{playerCount}** 名玩家，要求如下：\n\n"
+                           + $"**类型：** {args.SupportedStyles}\n\n"
+                           + $"**玩家：** {string.Join(", ", args.SupportedPlayers)}\n\n"
+                           + (args.IsDocked ? "已设置底座模式。`掌机模式`同样无效。\n\n" : "")
+                           + "_请重新配置输入设置，然后按确定。_";
 
-            return DisplayMessageDialog("Controller Applet", message);
+            return DisplayMessageDialog("手柄 Applet", message);
         }
 
         public bool DisplayCabinetDialog(out string userText)
