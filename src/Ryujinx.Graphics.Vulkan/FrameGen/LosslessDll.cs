@@ -71,12 +71,12 @@ namespace Ryujinx.Graphics.Vulkan.FrameGen
 
         public static string Describe(LosslessStatus status) => status switch
         {
-            LosslessStatus.Ok => "DLL valida",
-            LosslessStatus.NotInstalled => "Arquivo nao encontrado",
-            LosslessStatus.UnreadableFile => "Nao foi possivel ler o arquivo",
-            LosslessStatus.NotPortableExecutable => "O arquivo nao e uma DLL do Windows valida",
-            LosslessStatus.MissingShaders => "A DLL nao contem os shaders do Lossless Scaling esperados",
-            _ => "Falha ao preparar os shaders da DLL",
+            LosslessStatus.Ok => "DLL 有效",
+            LosslessStatus.NotInstalled => "未找到文件",
+            LosslessStatus.UnreadableFile => "无法读取文件",
+            LosslessStatus.NotPortableExecutable => "该文件不是有效的 Windows DLL",
+            LosslessStatus.MissingShaders => "该 DLL 不包含预期的 Lossless Scaling 着色器",
+            _ => "准备 DLL 着色器失败",
         };
 
         public static LosslessStatus Validate(string path)

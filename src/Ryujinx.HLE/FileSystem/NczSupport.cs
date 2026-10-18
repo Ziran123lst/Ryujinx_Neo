@@ -453,14 +453,14 @@ namespace Ryujinx.HLE.FileSystem
 
             if (Encoding.ASCII.GetString(sectHeader, 0, 8) != "NCZSECTN")
             {
-                throw new InvalidDataException($"NCZ invalido (sem NCZSECTN): {name}");
+                throw new InvalidDataException($"NCZ 无效（缺少 NCZSECTN）：{name}");
             }
 
             long sectionCount = BinaryPrimitives.ReadInt64LittleEndian(sectHeader.AsSpan(8));
 
             if (sectionCount <= 0 || sectionCount > 0x100)
             {
-                throw new InvalidDataException($"NCZ invalido (secoes={sectionCount}): {name}");
+                throw new InvalidDataException($"NCZ 无效（分区数={sectionCount}）：{name}");
             }
 
             byte[] sectionData = new byte[sectionCount * 0x40];
@@ -481,7 +481,7 @@ namespace Ryujinx.HLE.FileSystem
 
                 if (offset < UncompressableHeaderSize || size < 0)
                 {
-                    throw new InvalidDataException($"NCZ com secao invalida: {name}");
+                    throw new InvalidDataException($"NCZ 包含无效分区：{name}");
                 }
 
                 _sections[i] = new Section(offset, size, cryptoType, s.Slice(0x20, 0x10).ToArray(), s.Slice(0x30, 0x10).ToArray());
@@ -512,11 +512,11 @@ namespace Ryujinx.HLE.FileSystem
 
                 if (exponent < 14 || exponent > 30 || blockCount <= 0 || UncompressableHeaderSize + decompressedSize < expected)
                 {
-                    throw new InvalidDataException($"NCZBLOCK invalido: {name}");
+                    throw new InvalidDataException($"NCZBLOCK 无效：{name}");
                 }
                 if (decompressedSize <= 0 || blockCount != ((decompressedSize - 1) / (1L << exponent)) + 1 ||
                     blockCount > (_baseSize - position - 0x18) / 4)
-                    throw new InvalidDataException($"NCZBLOCK table invalid: {name}");
+                    throw new InvalidDataException($"NCZBLOCK 表无效：{name}");
 
                 byte[] sizes = new byte[blockCount * 4];
                 ReadBaseExact(position + 0x18, sizes);
@@ -535,7 +535,7 @@ namespace Ryujinx.HLE.FileSystem
                     long rawSize = Math.Min(_blockSize, decompressedSize - (long)i * _blockSize);
                     if (_blockCompressedSizes[i] <= 0 || _blockCompressedSizes[i] > rawSize ||
                         _blockCompressedSizes[i] > _baseSize - current)
-                        throw new InvalidDataException($"NCZBLOCK size invalid: {name} block={i}");
+                        throw new InvalidDataException($"NCZBLOCK 块大小无效：{name} 块={i}");
                     _blockOffsets[i] = current;
                     current += _blockCompressedSizes[i];
                 }
@@ -562,7 +562,7 @@ namespace Ryujinx.HLE.FileSystem
 
                 if (read <= 0)
                 {
-                    throw new EndOfStreamException($"NCZ truncado: {_name}");
+                    throw new EndOfStreamException($"NCZ 已截断：{_name}");
                 }
 
                 done += (int)read;
@@ -674,7 +674,7 @@ namespace Ryujinx.HLE.FileSystem
 
                 if (produced != decompressedSize)
                 {
-                    throw new InvalidDataException($"NCZ bloco {index} descomprimiu {produced} de {decompressedSize} bytes: {_name}");
+                    throw new InvalidDataException($"NCZ 块 {index} 解压得到 {produced} 字节，预期 {decompressedSize}：{_name}");
                 }
             }
             else
