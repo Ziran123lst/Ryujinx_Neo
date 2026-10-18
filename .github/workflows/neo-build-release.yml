@@ -44,7 +44,6 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      # 用最新 9.0.x 而非 global.json 的 9.0.100（9.0.100 的 NuGet 会误报 NU1008）
       - name: 设置 .NET 9（9.0.x）
         uses: actions/setup-dotnet@v4
         with:
@@ -176,11 +175,6 @@ jobs:
       - name: 发布 Ryujinx（Linux x64 自包含）
         run: |
           mkdir -p release_output
-          echo "=== SDK ==="
-          dotnet --version
-          echo "=== restore full ==="
-          dotnet restore -v normal src/Ryujinx/Ryujinx.csproj 2>&1 | head -300 || true
-          echo "=== publish ==="
           dotnet publish -c Release -r linux-x64 -o ./publish/publish \
             -p:DebugType=embedded src/Ryujinx --self-contained true
           chmod +x publish/publish/Ryujinx.sh publish/publish/Ryujinx
