@@ -21,6 +21,15 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  ANDROID_PLATFORM: 'android-37.0'
+  ANDROID_BUILD_TOOLS: '37.0.0'
+  NDK_VERSION: '28.2.13676358'
+  CMAKE_SDK_VERSION: '3.22.1'
+  CMAKE_NATIVE_VERSION: '4.1.2'
+  CMDLINE_TOOLS_BUILD: '11076708'
+  GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=512m"'
+
 jobs:
   android:
     name: Android APK (armv8.2)
@@ -35,44 +44,100 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: 设置 .NET 9 SDK
+      # 用最新 9.0.x 而非 global.json 的 9.0.100（9.0.100 的 NuGet 会误报 NU1008）
+      - name: 设置 .NET 9（9.0.x）
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: global.json
+          dotnet-version: '9.0.x'
 
       - name: 安装 .NET Android 工作负载（编译 libkenjinx.so 需要）
         run: dotnet workload install android
 
-      - name: 安装 SDK 组件并接受许可
+      - name: 安装 Android SDK
         run: |
-          SDKMANAGER="$(command -v sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")"
-          echo "Using sdkmanager: $SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          # 注意：Android 17 (API 37) 平台包采用版本化命名 platforms;android-37.0，
-          # 仓库中不存在旧式 platforms;android-37
-          "$SDKMANAGER" --install \
-            "platforms;android-37.0" \
-            "build-tools;36.0.0" \
-            "build-tools;37.0.0" \
-            "ndk;28.2.13676358" \
-            "cmake;4.1.2"
-          # AGP 按 compileSdk=37 查找 platforms/android-37，若 sdkmanager 装到 android-37.0 则复制一份兼容
-          ls "$ANDROID_HOME/platforms/"
-          if [ -d "$ANDROID_HOME/platforms/android-37.0" ] && [ ! -e "$ANDROID_HOME/platforms/android-37" ]; then
-            cp -r "$ANDROID_HOME/platforms/android-37.0" "$ANDROID_HOME/platforms/android-37"
-            echo "Created platforms/android-37 alias for AGP compatibility"
+          export ANDROID_HOME=$HOME/android-sdk
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          cd "$HOME"
+          wget -q "https://dl.google.com/android/repository/commandlinetools-linux-${CMDLINE_TOOLS_BUILD}_latest.zip" -O tools.zip
+          unzip -q tools.zip -d cmdline-tools-temp
+          mv cmdline-tools-temp/cmdline-tools "$ANDROID_HOME/cmdline-tools/latest"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          yes | sdkmanager --licenses || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;${ANDROID_PLATFORM}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}" \
+            "ndk;${NDK_VERSION}" \
+            "cmake;${CMAKE_SDK_VERSION}"
+
+          cd /tmp
+          wget -q "https://github.com/Kitware/CMake/releases/download/v${CMAKE_NATIVE_VERSION}/cmake-${CMAKE_NATIVE_VERSION}-linux-x86_64.tar.gz" -O cmake.tar.gz
+          tar -xzf cmake.tar.gz
+          CMAKE_INSTALL_DIR="$ANDROID_HOME/cmake/${CMAKE_NATIVE_VERSION}"
+          mkdir -p "$CMAKE_INSTALL_DIR"
+          cp -r "cmake-${CMAKE_NATIVE_VERSION}-linux-x86_64/." "$CMAKE_INSTALL_DIR/"
+
+      - name: 配置环境（android-37 兼容符号链接）
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+
+          # SDK 37 的 platform 目录名为 android-37.0，链接为 android-37 供 Gradle 解析
+          if [ -d "$ANDROID_HOME/platforms/android-37.0" ] && [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
+            ln -s android-37.0 "$ANDROID_HOME/platforms/android-37"
           fi
+
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/cmake/${CMAKE_NATIVE_VERSION}/bin" >> "$GITHUB_PATH"
+
+          NDK_PATH="$ANDROID_HOME/ndk/${NDK_VERSION}"
+          echo "ANDROID_NDK_HOME=$NDK_PATH" >> "$GITHUB_ENV"
+          echo "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin" >> "$GITHUB_PATH"
+
+      - name: 配置 NuGet 源
+        run: |
+          find . -iname "nuget.config" -delete
+          cat > nuget.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+              <add key="ryujinx-projects" value="https://git.ryujinx.app/api/packages/projects/nuget/index.json" />
+            </packageSources>
+          </configuration>
+          EOF
+          dotnet nuget locals all --clear
+
+      - name: 生成 debug keystore
+        run: |
+          mkdir -p /home/runner/.config/.android
+          keytool -genkey -v \
+            -keystore /home/runner/.config/.android/debug.keystore \
+            -storepass android -alias androiddebugkey \
+            -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
 
       - name: 构建 APK（mainlineArmv82Release）
         working-directory: src/KenjinxAndroid
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
-          ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
         run: |
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew :app:assembleMainlineArmv82Release --no-daemon --stacktrace
+          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m" >> gradle.properties
+          cat > local.properties << EOF
+          sdk.dir=$ANDROID_HOME
+          ndk.dir=$ANDROID_NDK_HOME
+          cmake.dir=$ANDROID_HOME/cmake/${CMAKE_NATIVE_VERSION}
+          EOF
+          ./gradlew assembleMainlineArmv82Release \
+            -Porg.kenjinx.config=release \
+            -Pandroid.ndkPath="$ANDROID_NDK_HOME" \
+            --no-daemon \
+            --build-cache \
+            --parallel
 
       - name: 上传 APK 产物
         uses: actions/upload-artifact@v4
@@ -88,9 +153,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
+      - name: 设置 .NET 9（9.0.x）
+        uses: actions/setup-dotnet@v4
         with:
-          global-json-file: global.json
+          dotnet-version: '9.0.x'
+
+      - name: 配置 NuGet 源
+        run: |
+          find . -iname "nuget.config" -delete
+          cat > nuget.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+              <add key="ryujinx-projects" value="https://git.ryujinx.app/api/packages/projects/nuget/index.json" />
+            </packageSources>
+          </configuration>
+          EOF
+          dotnet nuget locals all --clear
 
       - name: 发布 Ryujinx（Linux x64 自包含）
         run: |
