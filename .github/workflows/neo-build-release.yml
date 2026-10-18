@@ -99,6 +99,7 @@ jobs:
 
       - name: 配置 NuGet 源
         run: |
+          # git.ryujinx.app 私有源已失效（2026-10 起持续超时），只用 nuget.org
           find . -iname "nuget.config" -delete
           cat > nuget.config << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
@@ -106,7 +107,6 @@ jobs:
             <packageSources>
               <clear />
               <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-              <add key="ryujinx-projects" value="https://git.ryujinx.app/api/packages/projects/nuget/index.json" />
             </packageSources>
           </configuration>
           EOF
@@ -160,6 +160,7 @@ jobs:
 
       - name: 配置 NuGet 源
         run: |
+          # git.ryujinx.app 私有源已失效（2026-10 起持续超时），只用 nuget.org
           find . -iname "nuget.config" -delete
           cat > nuget.config << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
@@ -167,7 +168,6 @@ jobs:
             <packageSources>
               <clear />
               <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-              <add key="ryujinx-projects" value="https://git.ryujinx.app/api/packages/projects/nuget/index.json" />
             </packageSources>
           </configuration>
           EOF
