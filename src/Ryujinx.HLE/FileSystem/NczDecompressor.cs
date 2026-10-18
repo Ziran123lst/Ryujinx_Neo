@@ -48,7 +48,7 @@ namespace Ryujinx.HLE.FileSystem
         {
             try
             {
-                if (!input.CanRead || !input.CanSeek) throw new NotSupportedException("A origem precisa permitir leitura e busca.");
+                if (!input.CanRead || !input.CanSeek) throw new NotSupportedException("源文件必须支持读取和查找。");
                 if (standalone)
                 {
                     using NczFile file = OwnNcz(new ReadOnlyStreamFile(input), "standalone.ncz");
@@ -76,7 +76,7 @@ namespace Ryujinx.HLE.FileSystem
             {
                 if (ReferenceEquals(input, output) || !input.CanRead || !input.CanSeek ||
                     !output.CanRead || !output.CanWrite || !output.CanSeek)
-                    throw new NotSupportedException("A conversão precisa de arquivos distintos com suporte a busca e releitura.");
+                    throw new NotSupportedException("转换需要支持查找和重读的独立文件。");
                 if (standalone) ExportSingle(input, output, sourceName);
                 else ExportPackage(input, output);
                 CheckCanceled();
@@ -110,7 +110,7 @@ namespace Ryujinx.HLE.FileSystem
                 bool compressed = entry.Name.EndsWith(".ncz", StringComparison.OrdinalIgnoreCase);
                 string name = compressed ? entry.Name[..^4] + ".nca" : entry.Name;
                 if (name.Length == 0 || name.IndexOfAny(['/', '\\', '\0']) >= 0 || !names.Add(name))
-                    throw new InvalidDataException("Nome inválido ou duplicado no pacote.");
+                    throw new InvalidDataException("包中存在无效或重复的名称。");
                 long size = entry.Size;
                 if (compressed)
                 {
@@ -119,10 +119,10 @@ namespace Ryujinx.HLE.FileSystem
                     using NczFile ncz = OwnNcz(file.Release(), entry.Name);
                     size = ncz.NcaSize;
                 }
-                if (size < 0) throw new InvalidDataException("Tamanho inválido no pacote.");
+                if (size < 0) throw new InvalidDataException("包中大小无效。");
                 plan.Add(new Entry { SourceName = entry.Name, OutputName = name, Size = size, Compressed = compressed });
             }
-            if (!plan.Any(entry => entry.Compressed)) throw new InvalidDataException("O pacote não contém NCZ.");
+            if (!plan.Any(entry => entry.Compressed)) throw new InvalidDataException("该包不包含 NCZ。");
             return plan;
         }
 
@@ -144,7 +144,7 @@ namespace Ryujinx.HLE.FileSystem
             output.Position = 0;
             byte[] actual = HashStream(output, file.NcaSize);
             if (!actual.AsSpan().SequenceEqual(expected) || output.Length != file.NcaSize)
-                throw new InvalidDataException("Verificação SHA-256 do NCA falhou.");
+                throw new InvalidDataException("NCA 的 SHA-256 校验失败。");
         }
 
         private static void ExportPackage(Stream input, Stream output)
@@ -180,13 +180,13 @@ namespace Ryujinx.HLE.FileSystem
                 using UniqueRef<IFile> file = new();
                 destination.OpenFile(ref file.Ref, ("/" + entry.OutputName).ToU8Span(), OpenMode.Read).ThrowIfFailure();
                 file.Get.GetSize(out long size).ThrowIfFailure();
-                if (size != entry.Size) throw new InvalidDataException("Tamanho do arquivo exportado diverge.");
+                if (size != entry.Size) throw new InvalidDataException("导出文件的大小不一致。");
                 using HashOnlyStream hash = new();
                 CopyFile(file.Get, size, hash, true);
-                if (!hash.Digest().AsSpan().SequenceEqual(entry.Hash)) throw new InvalidDataException("Verificação SHA-256 do NSP falhou.");
+                if (!hash.Digest().AsSpan().SequenceEqual(entry.Hash)) throw new InvalidDataException("NSP 的 SHA-256 校验失败。");
             }
             if (output.Length != checked(headerSize + plan.Sum(entry => entry.Size)))
-                throw new InvalidDataException("Tamanho do NSP exportado diverge.");
+                throw new InvalidDataException("导出的 NSP 大小不一致。");
         }
 
         private static void CopyFile(IFile input, long size, Stream output, bool progress)
@@ -227,7 +227,7 @@ namespace Ryujinx.HLE.FileSystem
             string id = name.Split('.')[0];
             if (id.Length == 32 && id.All(Uri.IsHexDigit) &&
                 !Convert.ToHexString(hash.AsSpan(0, 16)).Equals(id, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("O NCA reconstruído não corresponde ao content ID do arquivo.");
+                throw new InvalidDataException("重建的 NCA 与文件的 content ID 不匹配。");
         }
 
         private static int HeaderSize(List<Entry> plan) => checked((0x10 + plan.Count * 0x18 +

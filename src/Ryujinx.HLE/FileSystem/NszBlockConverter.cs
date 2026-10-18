@@ -79,11 +79,11 @@ namespace Ryujinx.HLE.FileSystem
 
             if (!entries.Exists(x => x.Convert))
             {
-                throw new InvalidOperationException("NSZ ja usa NCZBLOCK.");
+                throw new InvalidOperationException("NSZ 已使用 NCZBLOCK。");
             }
 
             long done = 0;
-            const string conversionPhase = "Convertendo NSZ para NCZBLOCK";
+            const string conversionPhase = "正在将 NSZ 转换为 NCZBLOCK";
 
             progress?.Invoke(0, conversionPhase);
 
@@ -136,9 +136,9 @@ namespace Ryujinx.HLE.FileSystem
                 output.Position = end;
             }
 
-            progress?.Invoke(0, "Verificando integridade");
+            progress?.Invoke(0, "正在验证完整性");
             Verify(outputPath, entries, progress);
-            progress?.Invoke(100, "Concluido");
+            progress?.Invoke(100, "已完成");
         }
 
         private static void ParseNcz(FileStream f, Entry e)
@@ -150,14 +150,14 @@ namespace Ryujinx.HLE.FileSystem
 
             if (!h.AsSpan(0, 8).SequenceEqual("NCZSECTN"u8))
             {
-                throw new InvalidDataException("NCZSECTN ausente.");
+                throw new InvalidDataException("缺少 NCZSECTN。");
             }
 
             long sectionCount = BinaryPrimitives.ReadInt64LittleEndian(h.AsSpan(8));
 
             if (sectionCount <= 0 || sectionCount > 0x100)
             {
-                throw new InvalidDataException("section count invalido.");
+                throw new InvalidDataException("分区数量无效。");
             }
 
             byte[] sections = new byte[checked((int)sectionCount * 0x40)];
@@ -251,7 +251,7 @@ namespace Ryujinx.HLE.FileSystem
 
             if (writer.Sizes.Count != blockCount)
             {
-                throw new InvalidDataException("Quantidade de blocos incorreta.");
+                throw new InvalidDataException("块数量不正确。");
             }
 
             for (int i = 0; i < blockCount; i++)
@@ -277,7 +277,7 @@ namespace Ryujinx.HLE.FileSystem
 
             if (entries.Count != sourceEntries.Count)
             {
-                throw new InvalidDataException("PFS0 alterado durante conversao.");
+                throw new InvalidDataException("转换过程中 PFS0 已更改。");
             }
 
             long total = 0;
@@ -294,7 +294,7 @@ namespace Ryujinx.HLE.FileSystem
                 int percent = total == 0
                     ? 100
                     : (int)Math.Clamp(done * 100 / total, 0, 100);
-                progress?.Invoke(percent, "Verificando integridade");
+                progress?.Invoke(percent, "正在验证完整性");
             }
 
             for (int i = 0; i < entries.Count; i++)
@@ -304,7 +304,7 @@ namespace Ryujinx.HLE.FileSystem
 
                 if (src.Name != dst.Name)
                 {
-                    throw new InvalidDataException("Nome de entry divergente.");
+                    throw new InvalidDataException("条目名称不一致。");
                 }
 
                 byte[] hash;
@@ -315,7 +315,7 @@ namespace Ryujinx.HLE.FileSystem
 
                     if (dst.Convert)
                     {
-                        throw new InvalidDataException("Destino ainda e NCZ solid.");
+                        throw new InvalidDataException("目标仍是固实 NCZ。");
                     }
 
 
@@ -329,7 +329,7 @@ namespace Ryujinx.HLE.FileSystem
                         src.PrefixHash))
                     {
                         throw new InvalidDataException(
-                            $"SHA-256 do prefixo NCZ divergente: {src.Name}");
+                            $"NCZ 前缀 SHA-256 不一致：{src.Name}");
                     }
 
                     hash = HashNczBlock(f, dst, AdvanceVerify);
@@ -346,14 +346,14 @@ namespace Ryujinx.HLE.FileSystem
                 if (!CryptographicOperations.FixedTimeEquals(hash, src.Hash))
                 {
                     throw new InvalidDataException(
-                        $"SHA-256 divergente: {src.Name}");
+                        $"SHA-256 不一致：{src.Name}");
                 }
 
                 progress?.Invoke(
                     total == 0
                         ? 100
                         : (int)Math.Clamp(done * 100 / total, 0, 100),
-                    "Verificando integridade");
+                    "正在验证完整性");
             }
         }
 
@@ -369,7 +369,7 @@ namespace Ryujinx.HLE.FileSystem
 
             if (!bh.AsSpan(0, 8).SequenceEqual("NCZBLOCK"u8))
             {
-                throw new InvalidDataException("NCZBLOCK magic ausente.");
+                throw new InvalidDataException("缺少 NCZBLOCK 魔数。");
             }
 
             int exponent = bh[0xB];
@@ -381,13 +381,13 @@ namespace Ryujinx.HLE.FileSystem
             if (exponent < 14 || exponent > 30)
             {
                 throw new InvalidDataException(
-                    $"NCZBLOCK exponent invalido: {exponent}");
+                    $"NCZBLOCK 指数无效：{exponent}");
             }
 
             if (count <= 0 || size <= 0)
             {
                 throw new InvalidDataException(
-                    $"NCZBLOCK metadata invalida: blocks={count}, size={size}");
+                    $"NCZBLOCK 元数据无效：blocks={count}, size={size}");
             }
 
             long blockSizeLong = 1L << exponent;
@@ -397,7 +397,7 @@ namespace Ryujinx.HLE.FileSystem
             if (expectedBlocks != count)
             {
                 throw new InvalidDataException(
-                    $"NCZBLOCK block count invalido: {count} != {expectedBlocks}");
+                    $"NCZBLOCK 块数量无效：{count} != {expectedBlocks}");
             }
 
             int blockSize = checked((int)blockSizeLong);
@@ -422,7 +422,7 @@ namespace Ryujinx.HLE.FileSystem
                 if (packedSize <= 0 || packedSize > rawSize)
                 {
                     throw new InvalidDataException(
-                        $"NCZBLOCK tamanho invalido no bloco {i}: {packedSize}/{rawSize}");
+                        $"NCZBLOCK 块 {i} 大小无效：{packedSize}/{rawSize}");
                 }
 
                 byte[] packed = new byte[packedSize];
@@ -438,7 +438,7 @@ namespace Ryujinx.HLE.FileSystem
                     if (written != rawSize)
                     {
                         throw new InvalidDataException(
-                            $"Bloco NCZBLOCK {i} invalido: {written}/{rawSize} bytes.");
+                            $"NCZBLOCK 块 {i} 无效：{written}/{rawSize} 字节。");
                     }
 
                     hash.AppendData(raw);
@@ -455,7 +455,7 @@ namespace Ryujinx.HLE.FileSystem
             if (remaining != 0)
             {
                 throw new InvalidDataException(
-                    $"NCZBLOCK terminou com {remaining} bytes pendentes.");
+                    $"NCZBLOCK 结束时有 {remaining} 个字节未处理。");
             }
 
             return hash.GetHashAndReset();
@@ -470,7 +470,7 @@ namespace Ryujinx.HLE.FileSystem
 
             if (!h.AsSpan(0, 4).SequenceEqual("PFS0"u8))
             {
-                throw new InvalidDataException("Arquivo nao e PFS0.");
+                throw new InvalidDataException("文件不是 PFS0。");
             }
 
             int count = BinaryPrimitives.ReadInt32LittleEndian(h.AsSpan(4));
@@ -788,7 +788,7 @@ namespace Ryujinx.HLE.FileSystem
                 if (_total != _expected)
                 {
                     throw new InvalidDataException(
-                        $"Tamanho descomprimido {_total} != {_expected}");
+                        $"解压后大小 {_total} != {_expected}");
                 }
 
                 Hash = _hash.GetHashAndReset();
