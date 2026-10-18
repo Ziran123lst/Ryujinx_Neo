@@ -438,7 +438,7 @@ namespace Ryujinx.HLE.FileSystem
                     8) != "NCZSECTN")
             {
                 throw new InvalidDataException(
-                    $"NCZ invalido (sem NCZSECTN): {name}");
+                    $"NCZ 无效（缺少 NCZSECTN）：{name}");
             }
 
             long sectionCount =
@@ -450,7 +450,7 @@ namespace Ryujinx.HLE.FileSystem
                 sectionCount > 0x100)
             {
                 throw new InvalidDataException(
-                    $"NCZ invalido (secoes={sectionCount}): {name}");
+                    $"NCZ 无效（分区数={sectionCount}）：{name}");
             }
 
             byte[] sectionData =
@@ -498,7 +498,7 @@ namespace Ryujinx.HLE.FileSystem
                     size < 0)
                 {
                     throw new InvalidDataException(
-                        $"NCZ com secao invalida: {name}");
+                        $"NCZ 包含无效分区：{name}");
                 }
 
                 _sections[i] =
@@ -568,7 +568,7 @@ namespace Ryujinx.HLE.FileSystem
                     expected)
                 {
                     throw new InvalidDataException(
-                        $"NCZBLOCK invalido: {name}");
+                        $"NCZBLOCK 无效：{name}");
                 }
 
                 byte[] sizes =
@@ -644,7 +644,7 @@ namespace Ryujinx.HLE.FileSystem
                 if (read <= 0)
                 {
                     throw new EndOfStreamException(
-                        $"NCZ truncado: {_name}");
+                        $"NCZ 已截断：{_name}");
                 }
 
                 done += (int)read;
@@ -830,7 +830,7 @@ namespace Ryujinx.HLE.FileSystem
                     decompressedSize)
                 {
                     throw new InvalidDataException(
-                        $"NCZ bloco {index} descomprimiu {produced} de {decompressedSize} bytes: {_name}");
+                        $"NCZ 块 {index} 解压得到 {produced} 字节，预期 {decompressedSize}：{_name}");
                 }
             }
             else
@@ -1150,7 +1150,7 @@ namespace Ryujinx.HLE.FileSystem
 
             if (bound > int.MaxValue)
             {
-                throw new InvalidDataException("Zstd compression bound grande demais.");
+                throw new InvalidDataException("Zstd 压缩上界过大。");
             }
 
             return (int)bound;
@@ -1181,7 +1181,7 @@ namespace Ryujinx.HLE.FileSystem
 
                 if (result > int.MaxValue)
                 {
-                    throw new InvalidDataException("Zstd produziu bloco grande demais.");
+                    throw new InvalidDataException("Zstd 生成的块过大。");
                 }
 
                 return (int)result;
@@ -1226,7 +1226,7 @@ namespace Ryujinx.HLE.FileSystem
                 if (result > int.MaxValue)
                 {
                     throw new InvalidDataException(
-                        "Zstd produziu bloco grande demais.");
+                        "Zstd 生成的块过大。");
                 }
 
                 return (int)result;
@@ -1256,7 +1256,7 @@ namespace Ryujinx.HLE.FileSystem
             if (stream == IntPtr.Zero)
             {
                 throw new InvalidOperationException(
-                    "ZSTD_createDStream falhou.");
+                    "ZSTD_createDStream 创建失败。");
             }
 
             try
@@ -1351,7 +1351,7 @@ namespace Ryujinx.HLE.FileSystem
                                 if (totalWritten > expectedSize)
                                 {
                                     throw new InvalidDataException(
-                                        "NCZ sólido descomprimiu além do tamanho esperado.");
+                                        "固实 NCZ 解压超出了预期大小。");
                                 }
                             }
 
@@ -1360,7 +1360,7 @@ namespace Ryujinx.HLE.FileSystem
                                 produced == 0)
                             {
                                 throw new InvalidDataException(
-                                    "Zstd não progrediu durante a descompressão.");
+                                    "解压过程中 Zstd 未取得进展。");
                             }
                         }
                     }
@@ -1381,13 +1381,13 @@ namespace Ryujinx.HLE.FileSystem
                 if (lastResult != 0)
                 {
                     throw new InvalidDataException(
-                        "NCZ sólido terminou antes do fim do frame Zstd.");
+                        "固实 NCZ 在 Zstd 帧结束前提前终止。");
                 }
 
                 if (totalWritten != expectedSize)
                 {
                     throw new InvalidDataException(
-                        $"NCZ sólido descomprimiu {totalWritten} de {expectedSize} bytes.");
+                        $"固实 NCZ 已解压 {totalWritten}/{expectedSize} 字节。");
                 }
             }
             finally
