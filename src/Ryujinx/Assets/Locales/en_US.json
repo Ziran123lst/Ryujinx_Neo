@@ -902,5 +902,12 @@
   "GenLdnPassTooltip": "Generates a new passphrase, which can be shared with other players.",
   "ClearLdnPass": "Clear",
   "ClearLdnPassTooltip": "Clears the current passphrase, returning to the public network.",
-  "InvalidLdnPassphrase": "Invalid Passphrase! Must be in the format \"Ryujinx-<8 hex chars>\""
+  "InvalidLdnPassphrase": "Invalid Passphrase! Must be in the format \"Ryujinx-<8 hex chars>\"",
+  "XCITrimmerTrim": "Trim",
+  "XCITrimmerUntrim": "Untrim",
+  "MenuBarFileOpenMiiApplet": "Mii Edit Applet",
+  "UpdateWaitWindowTitle": "Kenji-NX - Waiting",
+  "CabinetInitialText": "My Amiibo",
+  "ConvertNszToNczblock": "Converting NSZ to NCZBLOCK",
+  "PreparingConversion": "Preparing conversion..."
 }
