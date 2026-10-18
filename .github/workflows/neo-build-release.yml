@@ -1,0 +1,125 @@
+name: 汉化版构建与发布
+
+# 本工作流为 fork 专属：
+# 1) 构建 Android APK（Kenjinx，mainlineArmv82Release）
+# 2) 构建桌面 Linux x64 版（Ryujinx）
+# 3) 将构建产物上传到本仓库的 Release（tag: nightly）
+#
+# 触发方式：
+#   - 推送到默认分支 neo-v2-nce2
+#   - 手动运行（Actions 页面 -> Run workflow）
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ neo-v2-nce2 ]
+
+concurrency:
+  group: neo-build-release
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    name: Android APK (armv8.2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: 设置 .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: 安装 .NET Android 工作负载（编译 libkenjinx.so 需要）
+        run: dotnet workload install android
+
+      - name: 设置 Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 安装 SDK 组件并接受许可
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --install \
+            "platforms;android-37" \
+            "build-tools;36.0.0" \
+            "ndk;28.2.13676358" \
+            "cmake;4.1.2"
+
+      - name: 构建 APK（mainlineArmv82Release）
+        working-directory: src/KenjinxAndroid
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          ./gradlew :app:assembleMainlineArmv82Release --no-daemon --stacktrace
+
+      - name: 上传 APK 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: kenjinx-apk
+          path: src/KenjinxAndroid/app/build/outputs/apk/mainlineArmv82/release/*.apk
+          if-no-files-found: error
+
+  desktop:
+    name: 桌面 Linux x64
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: 发布 Ryujinx（Linux x64 自包含）
+        run: |
+          mkdir -p release_output
+          dotnet publish -c Release -r linux-x64 -o ./publish/publish \
+            -p:DebugType=embedded src/Ryujinx --self-contained true
+          chmod +x publish/publish/Ryujinx.sh publish/publish/Ryujinx
+          tar -czvf release_output/ryujinx-neo-linux-x64.tar.gz -C publish publish
+
+      - name: 上传桌面产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-linux
+          path: release_output/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    name: 发布 Release
+    needs: [android, desktop]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 上传到 Release（tag: nightly）
+        uses: ncipollo/release-action@v1
+        with:
+          tag: nightly
+          name: 最新汉化版 (Nightly)
+          body: |
+            自动构建的汉化版本（Ryujinx_Neo fork）。
+            - Android APK：Kenjinx（界面已全面汉化，默认简体中文）
+            - 桌面版：Ryujinx Linux x64（界面已全面汉化，默认简体中文）
+          artifacts: "artifacts/**/*.apk,artifacts/**/*.tar.gz"
+          allowUpdates: true
+          replacesArtifacts: true
+          prerelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
