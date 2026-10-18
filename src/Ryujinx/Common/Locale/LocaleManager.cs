@@ -11,7 +11,9 @@ namespace Ryujinx.Ava.Common.Locale
 {
     class LocaleManager : BaseModel
     {
-        private const string DefaultLanguageCode = "en_US";
+        // This fork defaults to Simplified Chinese (zh_CN) for a fully localized
+        // out-of-the-box experience. Users can still pick any other language in Settings.
+        private const string DefaultLanguageCode = "zh_CN";
 
         private readonly Dictionary<LocaleKeys, string> _localeStrings;
         private Dictionary<LocaleKeys, string> _localeDefaultStrings;
@@ -32,10 +34,12 @@ namespace Ryujinx.Ava.Common.Locale
 
         private void Load()
         {
+            // This fork falls back to Chinese instead of the system culture, so a
+            // Spanish/other-locale system still gets a Chinese UI by default.
             string localeLanguageCode = !string.IsNullOrEmpty(ConfigurationState.Instance.UI.LanguageCode.Value) ?
-                ConfigurationState.Instance.UI.LanguageCode.Value : CultureInfo.CurrentCulture.Name.Replace('-', '_');
+                ConfigurationState.Instance.UI.LanguageCode.Value : "zh_CN";
 
-            // Load en_US as default, if the target language translation is missing or incomplete.
+            // Load zh_CN as the fallback base, if the target language translation is missing or incomplete.
             LoadDefaultLanguage();
             LoadLanguage(localeLanguageCode);
 
